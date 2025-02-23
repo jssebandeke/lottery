@@ -33,9 +33,10 @@ impl Lottery {
         require!(env::attached_deposit() == NearToken::from_near(1), "Not Engough Near Was Sent!");
 
         self.players.insert(env::predecessor_account_id());
+        self.lottery_id +=1;
 
 
-        log!("{},Entered lottery", env::predecessor_account_id());
+        log!("{}, entered lottery {}", env::predecessor_account_id(), self.lottery_id);
 
     }
 
@@ -91,9 +92,57 @@ impl Lottery {
         Promise::new(winner.to_owned()).transfer(env::account_balance())
 
     }
-
-    
     
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use near_sdk::testing_env;
+    use near_sdk::test_utils::VMContextBuilder;
+
+    fn set_context() -> VMContextBuilder {
+       VMContextBuilder::new()
+    }
+
+    #[test]
+    fn start_lottery() {
+
+       let contract = Lottery::default();
+
+       let ctx = set_context();
+       testing_env!(ctx.build());
+
+       assert_eq!(contract.owner.to_string(), "bob.near".to_string(), "Contract succesfully Initailzed");
+       log!("The contract owner is {}",contract.owner);
+
+    }
+
+
+    #[test]
+    fn enter_lottery() {
+
+        let mut contract = Lottery::default();
+
+        let mut ctx = set_context();
+        ctx.predecessor_account_id("player.near".parse().unwrap());
+        ctx.attached_deposit(NearToken::from_near(1));
+        
+        testing_env!(ctx.build());
+        contract.enter();
+
+        //let player: AccountId = "test.near".parse().unwrap();
+ 
+        contract.players.iter().for_each(|player| log!("{}",player));
+ 
+        assert!(contract.players.len() == 1);
+   
+     }
+ 
+ 
+
+}
+
 
 
